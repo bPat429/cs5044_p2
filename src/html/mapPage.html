@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		
+		<!-- we want to use D3, so this is where the D3 library version 7 gets called-->
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		
+		
+        <script src='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
+        <link href='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css' rel='stylesheet' />
+
+		
+		<!-- title of the webpage -->
+		<title> D3 Map page</title>
+		
+		<!-- for css -->
+		<style> 
+			#map {
+                position: relative;
+                z-index: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .infobox
+            {
+                font-size: large;
+                font-family: sans-serif;
+                text-transform: capitalize;
+            }
+		</style>
+		
+	</head>
+
+	<body>
+        <div id='map' style='width: 400px; height: 300px;'></div>
+        <script>
+            mapboxgl.accessToken = "pk.eyJ1IjoiYnBhdDEyMyIsImEiOiJjbGZlZXV5bWgxM3FrM3JwZ2Q2Z3RtaTdqIn0.0XjDhgU68pMM_eT88uPWyg";
+            let dataPath = "../data/edinburghLocations.csv";
+
+            d3.csv(dataPath).then((data) => {
+                console.log(data);
+
+                let mapBox = new mapboxgl.Map({
+                    container: "map",
+                    style: "mapbox://styles/mapbox/streets-v9"
+                    // center: [-3.2, 55.95],
+                    // zoom: 11
+                });
+
+                let container = mapBox.getCanvasContainer();
+                let svg = d3
+                    .select(container)
+                    .append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "500")
+                    .style("position", "absolute")
+                    .style("z-index", 2);
+
+                    project = (d) => { return mapBox.project(new mapboxgl.LngLat(d.lon, d.lat));}
+                
+                    let dots = svg.selectAll("circle")
+                        .data(data)
+                        .enter()
+                        .append("circle")
+                        .attr("r", 5)
+                        .attr("cx", d => project(d).x)
+                        .attr("cy", d => project(d).y)
+                        .style("fill", '#ff0000')
+                        .on("mouseover", (e, d) => {
+                            console.log(e);
+                            d3.select("body")
+                                .append("div")
+                                .attr("class", "infobox")
+                                .style("position", "absolute")
+                                .style("left", e.x + "px")
+                                .style("top", e.y + "px")
+                                .text(`${d.text}, ${d.year}`);
+                        })
+                        .on("mouseout", (e, d) => {
+                            d3.selectAll(".infobox")
+                                .remove();
+                        })
+                    
+                        render = () => {dots
+                            .attr("cx", d=> project(d).x)
+                            .attr("cy", d=> project(d).y)
+                        }
+
+                        mapBox.on("viewreset", render);
+                        mapBox.on("move", render);
+                        mapBox.on("moveend", render);
+                        render();
+
+            })
+        
+
+        </script>	
+	</body>
+
+</html>
